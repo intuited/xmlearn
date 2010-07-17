@@ -1,68 +1,5 @@
 """Routines to parse mpd's protocol documentation."""
-from pprint import PrettyPrinter as _PrettyPrinter
 
-from xml.etree import ElementTree as _ElementTree
-
-class TagsPrinter(_PrettyPrinter):
-    """Prettyprint tags from etree elements.
-    
-    This doesn't really work very well."""
-
-    from pprint import _recursion, _safe_repr, _commajoin
-    _recursion = staticmethod(_recursion)
-    _safe_repr = staticmethod(_safe_repr)
-    _commajoin = staticmethod(_commajoin)
-
-    def format(self, object, context, maxlevels, level):
-        if isinstance(object, _ElementTree._ElementInterface):
-            return self._format_element(object, context,
-                                        maxlevels, level)
-        else:
-            return self._safe_repr(object, context, maxlevels, level)
-
-    def _format_element(self, object, context, maxlevels, level):
-        """Handle formatting of ElementTree._ElementInterface objects."""
-        # This code is based on the case of pprint._safe_repr
-        #   which handles list and tuple instances.
-        tag = object.tag
-        if len(object) == 1:
-            format = tag + ': (%s,)'
-        else:
-            if len(object) == 0:
-                return tag, False, False
-            format = tag + ': (%s)'
-        objid = id(object)
-        if maxlevels and level >= maxlevels:
-            return format % "...", False, objid in context
-        if objid in context:
-            return self._recursion(object), False, True
-        context[objid] = 1
-        readable = False
-        recursive = False
-        components = []
-        append = components.append
-        level += 1
-        for o in object:
-            orepr, oreadable, orecur = self.format(o, context, maxlevels,
-                                                   level)
-            append(orepr)
-            if not oreadable:
-                readable = False
-            if orecur:
-                recursive = True
-        del context[objid]
-        return format % self._commajoin(components), readable, recursive
-
-class CommandReflection(_ElementTree.ElementTree):
-    """Provides command info based on the contents of a protocol.xml file."""
-    def __init__(self, source):
-        _ElementTree.ElementTree.__init__(self, None, source)
-
-    def dump_commands(self):
-        return TagsPrinter().pformat(self.getroot())
-
-
-# A new approach.  This seems to be working better.
 class LXML_Dumper(object):
     """Dump an lxml.etree tree starting at `element`.
     
@@ -152,10 +89,3 @@ class LXML_Dumper(object):
 ##--                  print self.format_element(element, depth)
 ##--                  for child in element.getchildren():
 ##--                      _dump(child, depth + 1)
-
-
-
-if __name__ == '__main__':
-    from sys import argv
-    with open(argv[1], 'r') as f:
-        print CommandReflection(f).dump_commands()
