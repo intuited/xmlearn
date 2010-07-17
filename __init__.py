@@ -16,27 +16,43 @@ class LXML_Dumper(object):
         >>> book = etree.parse('protocol.xml').getroot()
         >>> dumper = LXML_Dumper(maxdepth=2)
         >>> dumper.dump(book)
-        >>> [dumper.dump(c, maxdepth=1, rules='full')
-        ...  for c in book.iterfind('chapter')]
+        The Music Player Daemon protocol (/book):
+        [title] (/book/title): The Music Player Daemon protocol
         General protocol syntax (/book/chapter[1]):
             [title] (/book/chapter[1]/title): General protocol syntax
-            Requests (/book/chapter[1]/section[1]):
-            Responses (/book/chapter[1]/section[2]):
-            Command lists (/book/chapter[1]/section[3]):
-            Ranges (/book/chapter[1]/section[4]):
+            Requests (/book/chapter[1]/section[1])
+            Responses (/book/chapter[1]/section[2])
+            Command lists (/book/chapter[1]/section[3])
+            Ranges (/book/chapter[1]/section[4])
         Command reference (/book/chapter[2]):
             [title] (/book/chapter[2]/title): Command reference
             [note] (/book/chapter[2]/note):
-            Querying MPD's status (/book/chapter[2]/section[1]):
-            Playback options (/book/chapter[2]/section[2]):
-            Controlling playback (/book/chapter[2]/section[3]):
-            The current playlist (/book/chapter[2]/section[4]):
-            Stored playlists (/book/chapter[2]/section[5]):
-            The music database (/book/chapter[2]/section[6]):
-            Stickers (/book/chapter[2]/section[7]):
-            Connection settings (/book/chapter[2]/section[8]):
-            Audio output devices (/book/chapter[2]/section[9]):
-            Reflection (/book/chapter[2]/section[10]):
+            Querying MPD's status (/book/chapter[2]/section[1])
+            Playback options (/book/chapter[2]/section[2])
+            Controlling playback (/book/chapter[2]/section[3])
+            The current playlist (/book/chapter[2]/section[4])
+            Stored playlists (/book/chapter[2]/section[5])
+            The music database (/book/chapter[2]/section[6])
+            Stickers (/book/chapter[2]/section[7])
+            Connection settings (/book/chapter[2]/section[8])
+            Audio output devices (/book/chapter[2]/section[9])
+            Reflection (/book/chapter[2]/section[10])
+        >>> for c in book.iterdescendants('section'):
+        ...     dumper.dump(c, maxdepth=0, rules='full')
+        Requests (/book/chapter[1]/section[1]):
+        Responses (/book/chapter[1]/section[2]):
+        Command lists (/book/chapter[1]/section[3]):
+        Ranges (/book/chapter[1]/section[4]):
+        Querying MPD's status (/book/chapter[2]/section[1]):
+        Playback options (/book/chapter[2]/section[2]):
+        Controlling playback (/book/chapter[2]/section[3]):
+        The current playlist (/book/chapter[2]/section[4]):
+        Stored playlists (/book/chapter[2]/section[5]):
+        The music database (/book/chapter[2]/section[6]):
+        Stickers (/book/chapter[2]/section[7]):
+        Connection settings (/book/chapter[2]/section[8]):
+        Audio output devices (/book/chapter[2]/section[9]):
+        Reflection (/book/chapter[2]/section[10]):
 
     """
 
