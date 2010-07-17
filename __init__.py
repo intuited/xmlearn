@@ -125,3 +125,18 @@ class LXML_Dumper(object):
                         _dump(child, depth + 1)
 
         _dump(element, depth=depth)
+                    
+    def iter_unique_child_tags(root, tag):
+        """Iterates through unique child tags for all instances of tag.
+
+        Iteration starts at `root`.
+        """
+        found_child_tags = set()
+        instances = root.iterdescendants(tag)
+        from itertools import chain
+        child_nodes = chain.from_iterable(i.getchildren() for i in instances)
+        child_tags = (n.tag for n in child_nodes)
+        for t in child_tags:
+            if t not in found_child_tags:
+                found_child_tags.add(t)
+                yield t
