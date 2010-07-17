@@ -156,3 +156,12 @@ class LXML_Dumper(object):
             if t not in found_child_tags:
                 found_child_tags.add(t)
                 yield t
+
+    def iter_tag_list(self, root):
+        """List all unique tags at and under the `root` node."""
+        found_tags = set()
+        tags = (n.tag for n in root.iterdescendants() if hasattr(n, 'tag'))
+        for t in tags:
+            if t not in found_tags:
+                found_tags.add(t)
+                yield t
