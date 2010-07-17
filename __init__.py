@@ -143,7 +143,7 @@ class LXML_Dumper(object):
         _dump(element, depth=depth)
                     
     def iter_unique_child_tags(self, root, tag):
-        """Iterates through unique child tags for all instances of tag.
+        """Iterates through unique child tags for all instances of `tag`.
 
         Iteration starts at `root`.
         """
