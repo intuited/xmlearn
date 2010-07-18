@@ -165,3 +165,34 @@ class LXML_Dumper(object):
             if t not in found_tags:
                 found_tags.add(t)
                 yield t
+
+    def build_tag_graph(self, root):
+        """Build a python-graph graph of the tag relationships."""
+        from pygraph.classes.digraph import digraph
+
+        g = digraph()
+
+        tags = list(self.iter_tag_list(root))
+        g.add_nodes(tags)
+
+        for parent in tags:
+            for child in self.iter_unique_child_tags(root, parent):
+                g.add_edge((parent, child))
+
+        return g
+
+    def write_graph(self, graph, filename, format='png'):
+        """Write a python-graph graph as an image.
+
+        `format` can be any of those supported by pydot.Dot.write().
+        """
+        from pygraph.readwrite.dot import write
+        dotdata = write(graph)
+
+        from pydot import graph_from_dot_data
+        dotgraph = graph_from_dot_data(dotdata)
+        dotgraph.write(filename, format=format)
+
+    def write_tag_graph(self, root, filename, format='png'):
+        graph = self.build_tag_graph(root)
+        self.write_graph(graph, filename, format=format)
