@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-"""Routines to parse mpd's protocol documentation."""
-# TODO: refactor almost the entirety of this code into
-#         a general-purpose library not targeted at MPD.
+"""Library and CLI for learning about XML formats."""
 
-# TODO: rename this class `Dumper`.
-class LXML_Dumper(object):
+from deboogie import get_debug_logger
+debug = get_debug_logger('xmlearn')
+
+from lxml import etree
+
+class Dumper(object):
     """Dump an lxml.etree tree starting at `element`.
     
     Attributes:
@@ -12,65 +14,30 @@ class LXML_Dumper(object):
         width: the width at which text will be wrapped.
         ruleset: either a string matching one of the keys of rulesets,
                  or a Mapping containing such a ruleset.
+        outstream: a stream to which the dump will be written.
 
     For now, this function is just useful for sussing out the shape of the XML.
-
-    Setup:
-        >>> import lxml.etree as etree
-        >>> book = etree.parse('protocol.xml').getroot()
-        >>> dumper = LXML_Dumper(maxdepth=2)
-        >>> dumper.dump(book)
-        The Music Player Daemon protocol (/book):
-        [title] (/book/title): The Music Player Daemon protocol
-        General protocol syntax (/book/chapter[1]):
-            [title] (/book/chapter[1]/title): General protocol syntax
-            Requests (/book/chapter[1]/section[1])
-            Responses (/book/chapter[1]/section[2])
-            Command lists (/book/chapter[1]/section[3])
-            Ranges (/book/chapter[1]/section[4])
-        Command reference (/book/chapter[2]):
-            [title] (/book/chapter[2]/title): Command reference
-            [note] (/book/chapter[2]/note):
-            Querying MPD's status (/book/chapter[2]/section[1])
-            Playback options (/book/chapter[2]/section[2])
-            Controlling playback (/book/chapter[2]/section[3])
-            The current playlist (/book/chapter[2]/section[4])
-            Stored playlists (/book/chapter[2]/section[5])
-            The music database (/book/chapter[2]/section[6])
-            Stickers (/book/chapter[2]/section[7])
-            Connection settings (/book/chapter[2]/section[8])
-            Audio output devices (/book/chapter[2]/section[9])
-            Reflection (/book/chapter[2]/section[10])
-        >>> for c in book.iterdescendants('section'):
-        ...     dumper.dump(c, maxdepth=0, ruleset='full')
-        Requests (/book/chapter[1]/section[1]):
-        Responses (/book/chapter[1]/section[2]):
-        Command lists (/book/chapter[1]/section[3]):
-        Ranges (/book/chapter[1]/section[4]):
-        Querying MPD's status (/book/chapter[2]/section[1]):
-        Playback options (/book/chapter[2]/section[2]):
-        Controlling playback (/book/chapter[2]/section[3]):
-        The current playlist (/book/chapter[2]/section[4]):
-        Stored playlists (/book/chapter[2]/section[5]):
-        The music database (/book/chapter[2]/section[6]):
-        Stickers (/book/chapter[2]/section[7]):
-        Connection settings (/book/chapter[2]/section[8]):
-        Audio output devices (/book/chapter[2]/section[9]):
-        Reflection (/book/chapter[2]/section[10]):
-
     """
+    # TODO: write doctest examples
 
     # Each ruleset maps tags to kwargs for `format_element`.
-    rulesets = {'book': {'section': {'with_text': False},
-                         'para': {'linebreak': True},
-                         None: {'recurse': True}},
-                'full': {None: {'recurse': True}}}
-    default_ruleset = 'book'
+    rulesets = {'full': {None: {'recurse': True}}}
+
+    default_ruleset = 'full'
+
     from sys import stdout
+    outstream = stdout
+        
     from pprint import PrettyPrinter
     pformat = PrettyPrinter(indent=2).pformat
+
+    # Some more defaults.
+    maxdepth = None
+    width = 80
+
+    # This should maybe be moved into the CLI.
     @classmethod
-    def print_rulesets(cls, ruleset=None, outstream=stdout,
+    def print_rulesets(cls, ruleset=None, outstream=None,
                             format=pformat, verbose=False):
         """Output ruleset information.
 
@@ -83,6 +50,8 @@ class LXML_Dumper(object):
         `format` can be used to specify a different formatting function.
         """
 
+        outstream = outstream if outstream else cls.outstream
+
         if ruleset:
             outstream.write(format(cls.rulesets[ruleset]))
         else:
@@ -92,9 +61,6 @@ class LXML_Dumper(object):
                 outstream.writelines("\n".join(cls.rulesets.keys()))
         outstream.write("\n")
 
-    maxdepth = None
-    width = 80
-    ruleset = rulesets['book']
 
     def __init__(self, **kwargs):
         """Initialize object attributes documented in the class docstring."""
@@ -130,26 +96,31 @@ class LXML_Dumper(object):
             fmt = "{0} ({1}): {2}" if with_text else "{0} ({1})"
             return self.relwrap(fmt.format(title, path, eltext), depth=depth)
 
-    # TODO: this function should take an output stream.
     def dump(self, element, **kwargs):
         """Dump `element` according to `ruleset`.
         
         Keyword arguments:
             depth: the initial depth of the dump.  Normally this will be 0.
 
-            Additionally, the `maxdepth` and `ruleset` object keyword arguments
-              can be overridden.
+            Additionally, the `outstream`, `maxdepth`, and `ruleset`
+              object attributes can be overridden without modifying the object.
+
+            If `ruleset` is not given, `self`'s default ruleset is used.
+
+        I suspect that actually using XSLT would be a better way to do this.
         """
         from copy import copy
         from collections import Mapping
 
         depth = kwargs.pop('depth', 0)
-        maxdepth, ruleset = (kwargs.pop(a, getattr(self, a))
-                           for a in ('maxdepth', 'ruleset'))
+        # Pull variables from kwargs or self
+        maxdepth, outstream = (kwargs.pop(v, getattr(self, v))
+                               for v in ('maxdepth', 'outstream'))
 
-        if isinstance(ruleset, Mapping):
-            pass
-        elif isinstance(ruleset, basestring):
+        ruleset = kwargs.pop('ruleset', getattr(self, 'ruleset',
+                                                self.default_ruleset))
+
+        if isinstance(ruleset, basestring):
             ruleset = self.rulesets[ruleset]
         assert isinstance(ruleset, Mapping)
 
@@ -165,7 +136,8 @@ class LXML_Dumper(object):
                 kwargs = default
 
             recurse = kwargs.pop('recurse', False)
-            print self.format_element(element, depth, **kwargs)
+            outstream.write(self.format_element(element, depth, **kwargs))
+            outstream.write("\n")
             if recurse:
                 if (maxdepth is None or maxdepth > depth):
                     for child in element.getchildren():
@@ -229,7 +201,19 @@ class LXML_Dumper(object):
         self.write_graph(graph, filename, format=format)
 
 
-def cli(args, in_, out, err):
+# TODO: refactor this as a class.
+# TODO: make the dump command's `path` option a general one.
+def cli(args, in_, out, err, Dumper=Dumper):
+    """Provide a command-line interface to the module functionality.
+
+    Dumper: an xmlearn.Dumper or subclass.
+            Called in response to the `dump` subcommand.
+
+    args: the arguments to be parsed.
+
+    in_, out, err: open input/output/error files.
+    """
+
     from argparse import ArgumentParser, FileType
 
     def call_function(ns):
@@ -243,11 +227,18 @@ def cli(args, in_, out, err):
         return ns.function(**kwargs)
 
     def dump(ns):
+        """Initializes a Dumper with values from the namespace `ns`.
+
+        False values are filtered out.
+
+        Calls its `dump` method, sending output to `out`.
+        """
         if ns.list is False:
             kw_from_ns = ['width', 'maxdepth', 'ruleset']
             kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
                                        if value)
-            dumper = LXML_Dumper(**kwargs)
+            kwargs['outstream'] = out
+            dumper = Dumper(**kwargs)
             from lxml.etree import parse, XPath
             root = parse(ns.infile).getroot()
             if ns.path:
@@ -256,7 +247,7 @@ def cli(args, in_, out, err):
             else:
                 return dumper.dump(root)
         else:
-            return LXML_Dumper.print_rulesets(ruleset=ns.list,
+            return Dumper.print_rulesets(ruleset=ns.list,
                                               verbose=ns.verbose)
 
     # Map subcommands to actions.
@@ -278,17 +269,18 @@ def cli(args, in_, out, err):
         description='Dump xml data according to a set of rules.')
     action_map['dump'] = {'action': dump}
 
+    # TODO: rework argparsing (again) to use custom Actions.
 ##--Doesn't work because it forces the use of a subcommand.
 ##--      p_dump_subp = p_dump.add_subparsers(title='subcommands', dest='action')
 ##--      p_dump_rules = p_dump_subp.add_parser('rules',
 ##--          help='Get information about available rules',
-##--          description=LXML_Dumper.print_rulesets.__doc__)
+##--          description=Dumper.print_rulesets.__doc__)
 ##--      action_map['rules'] = {'action': call_function,
-##--                             'function': LXML_Dumper.print_rulesets,
+##--                             'function': Dumper.print_rulesets,
 ##--                             'kw_from_ns': ['verbose', 'ruleset']}
 ##--      p_dump_rules.add_argument('-v', '--verbose', action='store_true')
 ##--      p_dump_rules.add_argument(dest='ruleset', nargs='?',
-##--                                choices=LXML_Dumper.rulesets)
+##--                                choices=Dumper.rulesets)
 
     p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
                         nargs='?', default=False, dest='list',
@@ -296,10 +288,10 @@ def cli(args, in_, out, err):
                              'or information about a particular ruleset')
     # TODO: make the required nature of -r depend on the presence of a ruleset
     p_dump.add_argument('-r', '--ruleset',
-                        choices=LXML_Dumper.rulesets.keys(),
-                        default=LXML_Dumper.default_ruleset,
+                        choices=Dumper.rulesets.keys(),
+                        default=Dumper.default_ruleset,
                         help='Which set of rules to apply.\nDefaults to "{0}".'
-                             .format(LXML_Dumper.default_ruleset))
+                             .format(Dumper.default_ruleset))
     p_dump.add_argument('-d', '--maxdepth', type=int,
                         help='How many levels to dump.')
     # TODO: set default width to console width
