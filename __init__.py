@@ -185,22 +185,29 @@ def iter_tag_list(bases):
             found_tags.add(t)
             yield t
 
-def build_tag_graph(root):
-    """Build a python-graph graph of the tag relationships."""
+def build_tag_graph(bases):
+    """Build a python-graph graph of the tag relationships.
+    
+    `bases` is an element or iterable of elements.
+    """
     from pygraph.classes.digraph import digraph
 
     g = digraph()
 
-    tags = list(iter_tag_list(root))
+    tags = list(iter_tag_list(bases))
     g.add_nodes(tags)
 
-    for parent in tags:
-        for child in iter_unique_child_tags(root, parent):
-            g.add_edge((parent, child))
+    # TODO: this is totally inefficient:
+    #         it makes more sense to do each base separately,
+    #         to avoid searching it for tags it doesn't have.
+    #       The better way is to build the set of all bases' edges.
+    for tag in tags:
+        for child in iter_unique_child_tags(bases, tag):
+            g.add_edge((tag, child))
 
     return g
 
-def write_graph(graph, filename, format='png'):
+def write_graph(graph, filename, format='svg'):
     """Write a python-graph graph as an image.
 
     `format` can be any of those supported by pydot.Dot.write().
@@ -212,8 +219,12 @@ def write_graph(graph, filename, format='png'):
     dotgraph = graph_from_dot_data(dotdata)
     dotgraph.write(filename, format=format)
 
-def write_tag_graph(root, filename, format='png'):
-    graph = build_tag_graph(root)
+def write_tag_graph(bases, filename, format='png'):
+    """Build and write a graph of the tag relationships in `bases`.
+
+    `bases` can be a single element or an iterable of them.
+    """
+    graph = build_tag_graph(bases)
     write_graph(graph, filename, format=format)
 
 
@@ -344,6 +355,47 @@ def cli(args, in_, out, err, Dumper=Dumper):
             action=ListChildrenAction,
             help='List all tags which appear as children of PARENT.')
     build_tags_parser(subparsers)
+
+    def build_graph_parser(subparsers):
+        try:
+            from pydot import Dot
+            formats = Dot().formats
+        except ImportError:
+            return
+
+        p_graph = subparsers.add_parser('graph',
+            help='Build a graph from the XML tags relationships.',
+            description='Build a graph from the XML tags relationships.')
+
+        def act(ns):
+            extension = ns.outfile.split('.')[-1]
+            if ns.format:
+                if extension != ns.format:
+                    ns.outfile += '.' + ns.format
+            else:
+                if extension in formats:
+                    ns.format = extension
+
+            root = etree.parse(ns.infile).getroot()
+            write_tag_graph(ns.path(root), ns.outfile, ns.format)
+
+        p_graph.set_defaults(action=act)
+        p_graph.add_argument('--format', choices=formats, metavar='FORMAT',
+                             help='The format for the graph image.\n'
+                                  'It will be appended to the filename '
+                                  'unless they already concur '
+                                  'or -F is passed.\n'
+                                  'Choose from ' + str(formats))
+        p_graph.add_argument('-F', '--force-extension',
+                             help='Allow the filename extension to differ '
+                                  'from the file format.\n'
+                                  'Without this option, the format extension '
+                                  'will be appended to the filename.')
+        p_graph.add_argument(dest='outfile', default=None,
+                             help='The filename for the graph image.\n'
+                                  'If no --format is given, '
+                                  'it will be based on this name.')
+    build_graph_parser(subparsers)
 
     namespace = parser.parse_args(args)
 
