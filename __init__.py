@@ -248,25 +248,16 @@ def cli(args, in_, out, err, Dumper=Dumper):
             return Dumper.print_rulesets(ruleset=ns.list,
                                               verbose=ns.verbose)
 
-    # Map subcommands to actions.
-    # This seemed necessary because it's not possible to
-    #   use set_defaults to control nested subcommands.
-    # Then I discovered that you can't implement optional subcommands.
-    # At this point it could be worked back into set_defaults calls,
-    #   but it may be useful to use nested subcommands at a later point.
-    action_map = {}
-
     parser = ArgumentParser()
     parser.add_argument('-i', '--infile', type=FileType, default=in_,
                         help='The XML file to learn about.\n'
                              'Defaults to stdin.')
 
-    subparsers = parser.add_subparsers(title='subcommands', dest='action')
+    subparsers = parser.add_subparsers(title='subcommands')
     p_dump = subparsers.add_parser('dump',
         help='Dump xml data according to a set of rules.',
         description='Dump xml data according to a set of rules.')
-    action_map['dump'] = {'action': dump}
-
+    p_dump.set_defaults(action=dump)
     # TODO: rework argparsing (again) to use custom Actions.
 
     p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
@@ -293,10 +284,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
                              'Defaults to the root node.')
 
     namespace = parser.parse_args(args)
-
-    # Push the action map into the namespace
-    for attrib, value in action_map[namespace.action].iteritems():
-        setattr(namespace, attrib, value)
 
     return namespace.action(namespace)
 
