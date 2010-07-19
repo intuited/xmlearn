@@ -228,8 +228,7 @@ def cli(args, in_, out, err, Dumper=Dumper):
         """Initializes a Dumper with values from the namespace `ns`.
 
         False values are filtered out.
-
-        Calls its `dump` method, sending output to `out`.
+        Dumps `ns.path` from the XML file `ns.infile`.
         """
         kw_from_ns = ['width', 'maxdepth', 'ruleset', 'outstream']
         kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
