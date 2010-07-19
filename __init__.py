@@ -259,8 +259,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
         help='Dump xml data according to a set of rules.',
         description='Dump xml data according to a set of rules.')
     p_dump.set_defaults(action=dump)
-    # TODO: rework argparsing (again) to use custom Actions.
-
     p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
                         nargs='?', action=ListRulesetsAction,
                         help='Get a list of rulesets '
