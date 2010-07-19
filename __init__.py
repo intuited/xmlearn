@@ -278,7 +278,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
         p_dump.add_argument('-v', '--verbose', action='store_true',
                             help='Enable verbose ruleset list.\n'
                                 'Only useful with `-l`.')
-
     build_dump_parser(subparsers)
 
 
@@ -315,7 +314,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
         p_list.add_argument('-c', '--child', nargs='?', metavar='PARENT',
             action=ListChildrenAction,
             help='List all tags which appear as children of PARENT.')
-
     build_tags_parser(subparsers)
 
     namespace = parser.parse_args(args)
