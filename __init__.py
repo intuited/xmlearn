@@ -143,25 +143,43 @@ class Dumper(object):
         _dump(element, depth=depth)
 
 
-def iter_unique_child_tags(root, tag):
-    """Iterates through unique child tags for all instances of `tag`.
+def iter_unique_child_tags(bases, tags):
+    """Iterates through unique child tags for combinations of
+        `bases` and `tags`.
 
-    Iteration starts at `root`.
+    `bases` and `tags` can be singular -- elements and strings --
+      or iterables of those respective types.
     """
-    found_child_tags = set()
-    instances = root.iterdescendants(tag)
-    from itertools import chain
-    child_nodes = chain.from_iterable(i.getchildren() for i in instances)
-    child_tags = (n.tag for n in child_nodes)
-    for t in child_tags:
-        if t not in found_child_tags:
-            found_child_tags.add(t)
-            yield t
+    # both elements and strings are iterable types,
+    #   so we need to check for those specific types.
+    bases, tags = (iter((p,)) if isinstance(p, t) else iter(p)
+                   for (p, t) in ((bases, etree._Element),
+                                  (tags, basestring)))
 
-def iter_tag_list(root):
-    """List all unique tags at and under the `root` node."""
+    tag_nodes = (node for base in bases for tag in tags
+                      for node in base.iterdescendants(tag))
+
+    child_tags = (child.tag for node in tag_nodes
+                            for child in node.getchildren())
+
+    found_child_tags = set()
+    for tag in child_tags:
+        if tag not in found_child_tags:
+            found_child_tags.add(tag)
+            yield tag
+
+def iter_tag_list(bases):
+    """List all unique tags at and under the `root` node.
+
+    `bases` can be a single element or an iterable of them.
+    """
+    bases = (iter((bases,)) if isinstance(bases, etree._Element)
+                            else iter(bases))
+
     found_tags = set()
-    tags = (n.tag for n in root.iterdescendants() if hasattr(n, 'tag'))
+    tags = (node.tag for base in bases
+                     for node in base.iterdescendants()
+                     if hasattr(node, 'tag'))
     for t in tags:
         if t not in found_tags:
             found_tags.add(t)
