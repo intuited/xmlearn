@@ -307,9 +307,15 @@ def cli(args, in_, out, err, Dumper=Dumper):
         def taglist(ns):
             root = etree.parse(ns.infile).getroot()
             itemfmt = '    {item}\n' if ns.show_element else '{item}\n'
-            for element in ns.path(root):
+            elements = ns.path(root)
+            if ns.combine:
+                elements = (elements,)
+                eltfmt = lambda e: '[multiple elements]\n'
+            else:
+                eltfmt = lambda e: e.getroottree().getpath(e) + "\n"
+            for element in elements:
                 if ns.show_element:
-                    out.write(element.getroottree().getpath(element) + "\n")
+                    out.write(eltfmt(element))
                 for item in ns.tagfunc(element, *ns.tagfunc_args):
                     out.write(itemfmt.format(item=item))
 
@@ -322,6 +328,12 @@ def cli(args, in_, out, err, Dumper=Dumper):
                  'will be listed in unbroken series.\n'
                  'This is mostly useful '
                  'when the path selects multiple elements.')
+        p_list.add_argument('-C', '--no-combine', action='store_false',
+                            dest='combine',
+                            help='Do not combine results '
+                                 'from various path elements.\n'
+                                 'This option is only meaningful '
+                                 'when the --path leads to multiple elements.')
 
         class ListChildrenAction(Action):
             """Change the tag function and set the extra argument."""
