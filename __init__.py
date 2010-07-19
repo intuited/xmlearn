@@ -142,60 +142,60 @@ class Dumper(object):
 
         _dump(element, depth=depth)
 
-    def iter_unique_child_tags(self, root, tag):
-        """Iterates through unique child tags for all instances of `tag`.
+def iter_unique_child_tags(root, tag):
+    """Iterates through unique child tags for all instances of `tag`.
 
-        Iteration starts at `root`.
-        """
-        found_child_tags = set()
-        instances = root.iterdescendants(tag)
-        from itertools import chain
-        child_nodes = chain.from_iterable(i.getchildren() for i in instances)
-        child_tags = (n.tag for n in child_nodes)
-        for t in child_tags:
-            if t not in found_child_tags:
-                found_child_tags.add(t)
-                yield t
+    Iteration starts at `root`.
+    """
+    found_child_tags = set()
+    instances = root.iterdescendants(tag)
+    from itertools import chain
+    child_nodes = chain.from_iterable(i.getchildren() for i in instances)
+    child_tags = (n.tag for n in child_nodes)
+    for t in child_tags:
+        if t not in found_child_tags:
+            found_child_tags.add(t)
+            yield t
 
-    def iter_tag_list(self, root):
-        """List all unique tags at and under the `root` node."""
-        found_tags = set()
-        tags = (n.tag for n in root.iterdescendants() if hasattr(n, 'tag'))
-        for t in tags:
-            if t not in found_tags:
-                found_tags.add(t)
-                yield t
+def iter_tag_list(root):
+    """List all unique tags at and under the `root` node."""
+    found_tags = set()
+    tags = (n.tag for n in root.iterdescendants() if hasattr(n, 'tag'))
+    for t in tags:
+        if t not in found_tags:
+            found_tags.add(t)
+            yield t
 
-    def build_tag_graph(self, root):
-        """Build a python-graph graph of the tag relationships."""
-        from pygraph.classes.digraph import digraph
+def build_tag_graph(root):
+    """Build a python-graph graph of the tag relationships."""
+    from pygraph.classes.digraph import digraph
 
-        g = digraph()
+    g = digraph()
 
-        tags = list(self.iter_tag_list(root))
-        g.add_nodes(tags)
+    tags = list(iter_tag_list(root))
+    g.add_nodes(tags)
 
-        for parent in tags:
-            for child in self.iter_unique_child_tags(root, parent):
-                g.add_edge((parent, child))
+    for parent in tags:
+        for child in iter_unique_child_tags(root, parent):
+            g.add_edge((parent, child))
 
-        return g
+    return g
 
     def write_graph(self, graph, filename, format='png'):
         """Write a python-graph graph as an image.
 
-        `format` can be any of those supported by pydot.Dot.write().
-        """
-        from pygraph.readwrite.dot import write
-        dotdata = write(graph)
+    `format` can be any of those supported by pydot.Dot.write().
+    """
+    from pygraph.readwrite.dot import write
+    dotdata = write(graph)
 
-        from pydot import graph_from_dot_data
-        dotgraph = graph_from_dot_data(dotdata)
-        dotgraph.write(filename, format=format)
+    from pydot import graph_from_dot_data
+    dotgraph = graph_from_dot_data(dotdata)
+    dotgraph.write(filename, format=format)
 
-    def write_tag_graph(self, root, filename, format='png'):
-        graph = self.build_tag_graph(root)
-        self.write_graph(graph, filename, format=format)
+def write_tag_graph(root, filename, format='png'):
+    graph = build_tag_graph(root)
+    write_graph(graph, filename, format=format)
 
 
 # TODO: refactor this as a class.
