@@ -142,6 +142,22 @@ class Dumper(object):
 
         _dump(element, depth=depth)
 
+def clone(dict, **additions):
+    from copy import deepcopy
+    copy = deepcopy(dict)
+    copy.update(**additions)
+    return copy
+
+class DocbookDumper(Dumper):
+    """Dumper for docbook XML files."""
+
+    rulesets = clone(Dumper.rulesets,
+                     book={'section': {'with_text': False},
+                           'para': {'linebreak': True},
+                           None: {'recurse': True}})
+
+    default_ruleset = 'book'
+
 
 def iter_unique_child_tags(bases, tags):
     """Iterates through unique child tags for combinations of
