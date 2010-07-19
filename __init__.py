@@ -136,7 +136,7 @@ class Dumper(object):
             outstream.write(self.format_element(element, depth, **kwargs))
             outstream.write("\n")
             if recurse:
-                if (maxdepth is None or maxdepth > depth):
+                if maxdepth is None or maxdepth > depth:
                     for child in element.getchildren():
                         _dump(child, depth + 1)
 
