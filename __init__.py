@@ -214,16 +214,19 @@ def cli(args, in_, out, err, Dumper=Dumper):
 
     from argparse import ArgumentParser, FileType, Action
 
+    def instantiate_dumper(ns):
+        kw_from_ns = ['width', 'maxdepth', 'ruleset', 'outstream']
+        kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
+                                    if key in kw_from_ns and value is not None)
+        return Dumper(**kwargs)
+
     def dump(ns):
         """Initializes a Dumper with values from the namespace `ns`.
 
         False values are filtered out.
         Dumps `ns.path` from the XML file `ns.infile`.
         """
-        kw_from_ns = ['width', 'maxdepth', 'ruleset', 'outstream']
-        kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
-                                    if value is not None)
-        dumper = Dumper(**kwargs)
+        dumper = instantiate_dumper(ns)
         root = etree.parse(ns.infile).getroot()
         return [dumper.dump(e) for e in ns.path(root)]
 
