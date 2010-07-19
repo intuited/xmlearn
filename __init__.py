@@ -181,8 +181,8 @@ def build_tag_graph(root):
 
     return g
 
-    def write_graph(self, graph, filename, format='png'):
-        """Write a python-graph graph as an image.
+def write_graph(graph, filename, format='png'):
+    """Write a python-graph graph as an image.
 
     `format` can be any of those supported by pydot.Dot.write().
     """
