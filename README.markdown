@@ -47,20 +47,27 @@ All three operate within the scope of an XPath provided by the global `-p` optio
 #### dump
 The `dump` functionality pretty-prints the structure of the document under a given XPath.
 
-    usage: xmlearn dump [-h] [-l [RULESET]] [-r {full}] [-d MAXDEPTH] [-w WIDTH] [-v]
+    usage: xmlearn dump [-h] [-f XML_FORMAT] [-r RULESET]
+                             [-d MAXDEPTH] [-w WIDTH]
+                             [-l [RULESET]] [-v]
 
     Dump xml data according to a set of rules.
 
     optional arguments:
       -h, --help            show this help message and exit
-      -l [RULESET], --list-rulesets [RULESET]
-                            Get a list of rulesets or information about a particular ruleset
-      -r {full}, --ruleset {full}
-                            Which set of rules to apply. Defaults to "full".
+      -f XML_FORMAT, --format XML_FORMAT
+                            The XML format or schema. Defaults to generic XML.
+                            xmlearn currently supports just generic and Docbook.
+                            Specifying `-f docbook` will enable the `book` ruleset
+                              to be specified via `-r book`.
+      -r RULESET, --ruleset RULESET
+                            Which set of rules to apply.
       -d MAXDEPTH, --maxdepth MAXDEPTH
                             How many levels to dump.
       -w WIDTH, --width WIDTH
                             The output width of the dump.
+      -l [RULESET], --list-rulesets [RULESET]
+                            Get a list of rulesets or information about a particular ruleset
       -v, --verbose         Enable verbose ruleset list. Only useful with `-l`.
 
 #### tags

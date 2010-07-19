@@ -312,19 +312,26 @@ def cli(args, in_, out, err, Dumper=Dumper):
 
         p_dump.set_defaults(action=dump, outstream=out)
 
+        # TODO: clean this up.  It should be possible to use `choices`, but
+        #         it seems to want to list the options after they've been `type`d.
+        dumpermap = {'default': Dumper, 'docbook': DocbookDumper}
+        p_dump.add_argument('-f', '--format', dest="Dumper",
+                            metavar='XML_FORMAT',
+                            type=lambda key: dumpermap[key],
+                            default='default',
+                            choices=dumpermap.values(),
+                            help='The XML format or schema.\n'
+                                 'Defaults to generic XML.\n'
+                                 'xmlearn currently supports just generic '
+                                 'and Docbook.  Specifying `-f docbook` '
+                                 'will enable the `book` ruleset '
+                                 'to be specified via `-r book`.')
+
         # TODO: see if it's possible to use the default ruleset
         #         for the Dumper selected with `-f`.
         p_dump.add_argument('-r', '--ruleset',
                             default=Dumper.default_ruleset,
                             help='Which set of rules to apply.\n')
-
-        dumpermap = {'default': Dumper, 'docbook': DocbookDumper}
-        p_dump.add_argument('-f', '--format', dest="Dumper",
-                            type=lambda key: dumpermap[key],
-                            default='default',
-                            choices=dumpermap.values(),
-                            help='The dump format.\n'
-                                 'Defaults to full recursion.')
 
         p_dump.add_argument('-d', '--maxdepth', type=int,
                             help='How many levels to dump.')
