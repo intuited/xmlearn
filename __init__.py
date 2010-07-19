@@ -172,8 +172,10 @@ def iter_unique_child_tags(bases, tags):
                    for (param, type) in ((bases, etree._Element),
                                          (tags, basestring)))
 
-    from itertools import chain
-    tag_nodes = (node for base in bases for tag in tags
+    from itertools import product
+    basetags = product(bases, tags)
+
+    tag_nodes = (node for base, tag in basetags
                       for node in base.iter(tag))
 
     child_tags = (child.tag for node in tag_nodes
