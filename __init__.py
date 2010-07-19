@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 """Library and CLI for learning about XML formats."""
 
-from deboogie import get_debug_logger
-debug = get_debug_logger('xmlearn')
-
 from lxml import etree
 
 class Dumper(object):
@@ -270,17 +267,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
     action_map['dump'] = {'action': dump}
 
     # TODO: rework argparsing (again) to use custom Actions.
-##--Doesn't work because it forces the use of a subcommand.
-##--      p_dump_subp = p_dump.add_subparsers(title='subcommands', dest='action')
-##--      p_dump_rules = p_dump_subp.add_parser('rules',
-##--          help='Get information about available rules',
-##--          description=Dumper.print_rulesets.__doc__)
-##--      action_map['rules'] = {'action': call_function,
-##--                             'function': Dumper.print_rulesets,
-##--                             'kw_from_ns': ['verbose', 'ruleset']}
-##--      p_dump_rules.add_argument('-v', '--verbose', action='store_true')
-##--      p_dump_rules.add_argument(dest='ruleset', nargs='?',
-##--                                choices=Dumper.rulesets)
 
     p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
                         nargs='?', default=False, dest='list',
