@@ -233,7 +233,7 @@ def cli(args, in_, out, err, Dumper=Dumper):
         """
         kw_from_ns = ['width', 'maxdepth', 'ruleset']
         kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
-                                    if value)
+                                    if value is not None)
         kwargs['outstream'] = out
         dumper = Dumper(**kwargs)
         from lxml.etree import parse, XPath
