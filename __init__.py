@@ -214,16 +214,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
 
     from argparse import ArgumentParser, FileType, Action
 
-    def call_function(ns):
-        """Calls `ns.function`, passing arguments as determined by `ns`.
-
-        Attributes of `ns` which are listed in `ns.kw_from_ns`
-          are added to the set of keyword arguments passed to `ns.function`.
-        """
-        kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
-                                   if key in ns.kw_from_ns)
-        return ns.function(**kwargs)
-
     def dump(ns):
         """Initializes a Dumper with values from the namespace `ns`.
 
