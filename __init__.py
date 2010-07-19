@@ -279,27 +279,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
 
     from argparse import ArgumentParser, FileType, Action
 
-    def instantiate_dumper(ns):
-        kw_from_ns = ['width', 'maxdepth', 'ruleset', 'outstream']
-        kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
-                                    if key in kw_from_ns and value is not None)
-        return Dumper(**kwargs)
-
-    def dump(ns):
-        """Initializes a Dumper with values from the namespace `ns`.
-
-        False values are filtered out.
-        Dumps `ns.path` from the XML file `ns.infile`.
-        """
-        dumper = instantiate_dumper(ns)
-        root = etree.parse(ns.infile).getroot()
-        return [dumper.dump(e) for e in ns.path(root)]
-
-    def list_rulesets(ns):
-        return Dumper.print_rulesets(ruleset=ns.ruleset,
-                                     verbose=ns.verbose)
-        
-
     parser = ArgumentParser()
     parser.add_argument('-i', '--infile', type=FileType, default=in_,
                         help='The XML file to learn about.\n'
@@ -314,6 +293,22 @@ def cli(args, in_, out, err, Dumper=Dumper):
         p_dump = subparsers.add_parser('dump',
             help='Dump xml data according to a set of rules.',
             description='Dump xml data according to a set of rules.')
+
+        def instantiate_dumper(ns):
+            kw_from_ns = ['width', 'maxdepth', 'ruleset', 'outstream']
+            kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
+                                       if key in kw_from_ns and value is not None)
+            return ns.Dumper(**kwargs)
+
+        def dump(ns):
+            """Initializes a Dumper with values from the namespace `ns`.
+
+            False values are filtered out.
+            Dumps `ns.path` from the XML file `ns.infile`.
+            """
+            dumper = instantiate_dumper(ns)
+            root = etree.parse(ns.infile).getroot()
+            return [dumper.dump(e) for e in ns.path(root)]
 
         p_dump.set_defaults(action=dump, outstream=out)
 
@@ -331,6 +326,9 @@ def cli(args, in_, out, err, Dumper=Dumper):
         p_dump.add_argument('-w', '--width', type=int,
                             help='The output width of the dump.')
 
+        def list_rulesets(ns):
+            return ns.Dumper.print_rulesets(ruleset=ns.ruleset,
+                                            verbose=ns.verbose)
         class ListRulesetsAction(Action):
             def __call__(self, parser, namespace, values, option_string=None):
                 setattr(namespace, 'action', list_rulesets)
