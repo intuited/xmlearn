@@ -212,7 +212,7 @@ def cli(args, in_, out, err, Dumper=Dumper):
     in_, out, err: open input/output/error files.
     """
 
-    from argparse import ArgumentParser, FileType
+    from argparse import ArgumentParser, FileType, Action
 
     def call_function(ns):
         """Calls `ns.function`, passing arguments as determined by `ns`.
@@ -231,27 +231,33 @@ def cli(args, in_, out, err, Dumper=Dumper):
 
         Calls its `dump` method, sending output to `out`.
         """
-        if ns.list is False:
-            kw_from_ns = ['width', 'maxdepth', 'ruleset']
-            kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
-                                       if value)
-            kwargs['outstream'] = out
-            dumper = Dumper(**kwargs)
-            from lxml.etree import parse, XPath
-            root = parse(ns.infile).getroot()
-            if ns.path:
-                path = XPath(ns.path)
-                return [dumper.dump(e) for e in path(root)]
-            else:
-                return dumper.dump(root)
+        kw_from_ns = ['width', 'maxdepth', 'ruleset']
+        kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
+                                    if value)
+        kwargs['outstream'] = out
+        dumper = Dumper(**kwargs)
+        from lxml.etree import parse, XPath
+        root = parse(ns.infile).getroot()
+        if ns.path:
+            path = XPath(ns.path)
+            return [dumper.dump(e) for e in path(root)]
         else:
-            return Dumper.print_rulesets(ruleset=ns.list,
-                                              verbose=ns.verbose)
+            return dumper.dump(root)
+
+    def list_rulesets(ns):
+        return Dumper.print_rulesets(ruleset=ns.ruleset,
+                                     verbose=ns.verbose)
+        
 
     parser = ArgumentParser()
     parser.add_argument('-i', '--infile', type=FileType, default=in_,
                         help='The XML file to learn about.\n'
                              'Defaults to stdin.')
+
+    class ListRulesetsAction(Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            setattr(namespace, 'action', list_rulesets)
+            setattr(namespace, 'ruleset', values)
 
     subparsers = parser.add_subparsers(title='subcommands')
     p_dump = subparsers.add_parser('dump',
@@ -261,7 +267,7 @@ def cli(args, in_, out, err, Dumper=Dumper):
     # TODO: rework argparsing (again) to use custom Actions.
 
     p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
-                        nargs='?', default=False, dest='list',
+                        nargs='?', action=ListRulesetsAction,
                         help='Get a list of rulesets '
                              'or information about a particular ruleset')
     # TODO: make the required nature of -r depend on the presence of a ruleset
