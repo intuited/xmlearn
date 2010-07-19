@@ -203,8 +203,9 @@ class Dumper(object):
 def cli(args, in_, out, err, Dumper=Dumper):
     """Provide a command-line interface to the module functionality.
 
-    Dumper: an xmlearn.Dumper or subclass.
+    Dumper: xmlearn.Dumper or subclass.
             Called in response to the `dump` subcommand.
+            Note that this should be the *class*, not an instantiation of it.
 
     args: the arguments to be parsed.
 
