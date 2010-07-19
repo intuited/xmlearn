@@ -317,15 +317,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
 
         p_dump.set_defaults(action=dump, outstream=out)
 
-        class ListRulesetsAction(Action):
-            def __call__(self, parser, namespace, values, option_string=None):
-                setattr(namespace, 'action', list_rulesets)
-                setattr(namespace, 'ruleset', values)
-        p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
-                            nargs='?', action=ListRulesetsAction,
-                            help='Get a list of rulesets '
-                                'or information about a particular ruleset')
-
         p_dump.add_argument('-r', '--ruleset',
                             choices=Dumper.rulesets.keys(),
                             default=Dumper.default_ruleset,
@@ -339,6 +330,15 @@ def cli(args, in_, out, err, Dumper=Dumper):
         # TODO: also apply the console width to the help display
         p_dump.add_argument('-w', '--width', type=int,
                             help='The output width of the dump.')
+
+        class ListRulesetsAction(Action):
+            def __call__(self, parser, namespace, values, option_string=None):
+                setattr(namespace, 'action', list_rulesets)
+                setattr(namespace, 'ruleset', values)
+        p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
+                            nargs='?', action=ListRulesetsAction,
+                            help='Get a list of rulesets '
+                                'or information about a particular ruleset')
         p_dump.add_argument('-v', '--verbose', action='store_true',
                             help='Enable verbose ruleset list.\n'
                                 'Only useful with `-l`.')
