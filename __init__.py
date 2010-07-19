@@ -152,12 +152,13 @@ def iter_unique_child_tags(bases, tags):
     """
     # both elements and strings are iterable types,
     #   so we need to check for those specific types.
-    bases, tags = (iter((p,)) if isinstance(p, t) else iter(p)
-                   for (p, t) in ((bases, etree._Element),
-                                  (tags, basestring)))
+    bases, tags = (iter((param,)) if isinstance(param, type) else iter(param)
+                   for (param, type) in ((bases, etree._Element),
+                                         (tags, basestring)))
 
+    from itertools import chain
     tag_nodes = (node for base in bases for tag in tags
-                      for node in base.iterdescendants(tag))
+                      for node in base.iter(tag))
 
     child_tags = (child.tag for node in tag_nodes
                             for child in node.getchildren())
@@ -176,10 +177,12 @@ def iter_tag_list(bases):
     bases = (iter((bases,)) if isinstance(bases, etree._Element)
                             else iter(bases))
 
-    found_tags = set()
+    from itertools import chain
+
     tags = (node.tag for base in bases
-                     for node in base.iterdescendants()
+                     for node in base.iter()
                      if hasattr(node, 'tag'))
+    found_tags = set()
     for t in tags:
         if t not in found_tags:
             found_tags.add(t)
