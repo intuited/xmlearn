@@ -218,7 +218,6 @@ def write_tag_graph(root, filename, format='png'):
 
 
 # TODO: refactor this as a class.
-# TODO: make the dump command's `path` option a general one.
 def cli(args, in_, out, err, Dumper=Dumper):
     """Provide a command-line interface to the module functionality.
 
