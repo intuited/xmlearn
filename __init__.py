@@ -142,6 +142,7 @@ class Dumper(object):
 
         _dump(element, depth=depth)
 
+
 def iter_unique_child_tags(root, tag):
     """Iterates through unique child tags for all instances of `tag`.
 
@@ -243,33 +244,79 @@ def cli(args, in_, out, err, Dumper=Dumper):
                         help='An XPath to be applied to various actions.\n'
                              'Defaults to the root node.')
 
-    class ListRulesetsAction(Action):
-        def __call__(self, parser, namespace, values, option_string=None):
-            setattr(namespace, 'action', list_rulesets)
-            setattr(namespace, 'ruleset', values)
-
     subparsers = parser.add_subparsers(title='subcommands')
-    p_dump = subparsers.add_parser('dump',
-        help='Dump xml data according to a set of rules.',
-        description='Dump xml data according to a set of rules.')
-    p_dump.set_defaults(action=dump, outstream=out)
-    p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
-                        nargs='?', action=ListRulesetsAction,
-                        help='Get a list of rulesets '
-                             'or information about a particular ruleset')
-    p_dump.add_argument('-r', '--ruleset',
-                        choices=Dumper.rulesets.keys(),
-                        default=Dumper.default_ruleset,
-                        help='Which set of rules to apply.\nDefaults to "{0}".'
-                             .format(Dumper.default_ruleset))
-    p_dump.add_argument('-d', '--maxdepth', type=int,
-                        help='How many levels to dump.')
-    # TODO: set default width to console width
-    p_dump.add_argument('-w', '--width', type=int,
-                        help='The output width of the dump.')
-    p_dump.add_argument('-v', '--verbose', action='store_true',
-                        help='Enable verbose ruleset list.\n'
-                             'Only useful with `-l`.')
+
+    def build_dump_parser(subparsers):
+        p_dump = subparsers.add_parser('dump',
+            help='Dump xml data according to a set of rules.',
+            description='Dump xml data according to a set of rules.')
+
+        p_dump.set_defaults(action=dump, outstream=out)
+
+        class ListRulesetsAction(Action):
+            def __call__(self, parser, namespace, values, option_string=None):
+                setattr(namespace, 'action', list_rulesets)
+                setattr(namespace, 'ruleset', values)
+        p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
+                            nargs='?', action=ListRulesetsAction,
+                            help='Get a list of rulesets '
+                                'or information about a particular ruleset')
+
+        p_dump.add_argument('-r', '--ruleset',
+                            choices=Dumper.rulesets.keys(),
+                            default=Dumper.default_ruleset,
+                            help='Which set of rules to apply.\n'
+                                 'Defaults to "{0}".'
+                                .format(Dumper.default_ruleset))
+
+        p_dump.add_argument('-d', '--maxdepth', type=int,
+                            help='How many levels to dump.')
+        # TODO: set default width to console width
+        # TODO: also apply the console width to the help display
+        p_dump.add_argument('-w', '--width', type=int,
+                            help='The output width of the dump.')
+        p_dump.add_argument('-v', '--verbose', action='store_true',
+                            help='Enable verbose ruleset list.\n'
+                                'Only useful with `-l`.')
+
+    build_dump_parser(subparsers)
+
+
+    def build_tags_parser(subparsers):
+        p_list = subparsers.add_parser('tags',
+            help='Show information about tags.',
+            description='Show information about tags.')
+
+        def taglist(ns):
+            root = etree.parse(ns.infile).getroot()
+            itemfmt = '    {item}\n' if ns.show_element else '{item}\n'
+            for element in ns.path(root):
+                if ns.show_element:
+                    out.write(element.getroottree().getpath(element) + "\n")
+                for item in ns.tagfunc(element, *ns.tagfunc_args):
+                    out.write(itemfmt.format(item=item))
+
+        p_list.set_defaults(action=taglist,
+                            tagfunc=iter_tag_list, tagfunc_args=[])
+
+        p_list.add_argument('-e', '--show-element', action='store_true',
+            help='Enables display of the element path.\n'
+                 'Without this option, data from multiple matching elements '
+                 'will be listed in unbroken series.\n'
+                 'This is mostly useful '
+                 'when the path selects multiple elements.')
+
+        class ListChildrenAction(Action):
+            """Change the tag function and set the extra argument."""
+            def __call__(self, parser, namespace, values, option_string=None):
+                if values:
+                    setattr(namespace, 'tagfunc', iter_unique_child_tags)
+                    setattr(namespace, 'tagfunc_args', [values])
+        p_list.add_argument('-c', '--child', nargs='?', metavar='PARENT',
+            action=ListChildrenAction,
+            help='List all tags which appear as children of PARENT.')
+
+    build_tags_parser(subparsers)
 
     namespace = parser.parse_args(args)
 
