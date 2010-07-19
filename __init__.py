@@ -239,6 +239,9 @@ def cli(args, in_, out, err, Dumper=Dumper):
     parser.add_argument('-i', '--infile', type=FileType, default=in_,
                         help='The XML file to learn about.\n'
                              'Defaults to stdin.')
+    parser.add_argument('-p', '--path', default='/*', type=etree.XPath,
+                        help='An XPath to be applied to various actions.\n'
+                             'Defaults to the root node.')
 
     class ListRulesetsAction(Action):
         def __call__(self, parser, namespace, values, option_string=None):
@@ -267,10 +270,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
     p_dump.add_argument('-v', '--verbose', action='store_true',
                         help='Enable verbose ruleset list.\n'
                              'Only useful with `-l`.')
-
-    p_dump.add_argument(dest='path', nargs='?', default='/*', type=etree.XPath,
-                        help='The XPath to the nodes to be dumped.\n'
-                             'Defaults to the root node.')
 
     namespace = parser.parse_args(args)
 
