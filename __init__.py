@@ -236,13 +236,8 @@ def cli(args, in_, out, err, Dumper=Dumper):
                                     if value is not None)
         kwargs['outstream'] = out
         dumper = Dumper(**kwargs)
-        from lxml.etree import parse, XPath
-        root = parse(ns.infile).getroot()
-        if ns.path:
-            path = XPath(ns.path)
-            return [dumper.dump(e) for e in path(root)]
-        else:
-            return dumper.dump(root)
+        root = etree.parse(ns.infile).getroot()
+        return [dumper.dump(e) for e in ns.path(root)]
 
     def list_rulesets(ns):
         return Dumper.print_rulesets(ruleset=ns.ruleset,
@@ -284,8 +279,8 @@ def cli(args, in_, out, err, Dumper=Dumper):
                         help='Enable verbose ruleset list.\n'
                              'Only useful with `-l`.')
 
-    p_dump.add_argument(dest='path', nargs='?', default=None,
-                        help='The XPath to the node to be dumped.\n'
+    p_dump.add_argument(dest='path', nargs='?', default='/*', type=etree.XPath,
+                        help='The XPath to the nodes to be dumped.\n'
                              'Defaults to the root node.')
 
     namespace = parser.parse_args(args)
