@@ -231,10 +231,9 @@ def cli(args, in_, out, err, Dumper=Dumper):
 
         Calls its `dump` method, sending output to `out`.
         """
-        kw_from_ns = ['width', 'maxdepth', 'ruleset']
+        kw_from_ns = ['width', 'maxdepth', 'ruleset', 'outstream']
         kwargs = dict((key, value) for key, value in ns.__dict__.iteritems()
                                     if value is not None)
-        kwargs['outstream'] = out
         dumper = Dumper(**kwargs)
         root = etree.parse(ns.infile).getroot()
         return [dumper.dump(e) for e in ns.path(root)]
@@ -258,7 +257,7 @@ def cli(args, in_, out, err, Dumper=Dumper):
     p_dump = subparsers.add_parser('dump',
         help='Dump xml data according to a set of rules.',
         description='Dump xml data according to a set of rules.')
-    p_dump.set_defaults(action=dump)
+    p_dump.set_defaults(action=dump, outstream=out)
     p_dump.add_argument('-l', '--list-rulesets', metavar='RULESET',
                         nargs='?', action=ListRulesetsAction,
                         help='Get a list of rulesets '
