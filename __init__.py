@@ -270,7 +270,6 @@ def cli(args, in_, out, err, Dumper=Dumper):
                         nargs='?', action=ListRulesetsAction,
                         help='Get a list of rulesets '
                              'or information about a particular ruleset')
-    # TODO: make the required nature of -r depend on the presence of a ruleset
     p_dump.add_argument('-r', '--ruleset',
                         choices=Dumper.rulesets.keys(),
                         default=Dumper.default_ruleset,
