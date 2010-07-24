@@ -96,8 +96,12 @@ class Dumper(object):
     def format_element(self, element, depth, linebreak=False, with_text=True):
         from textwrap import dedent
         title = getattr(element.find('title'), 'text', '')
-        title = title if title else '[{0}]'.format(element.tag)
-        path = element.getroottree().getpath(element)
+        title = (title if title 
+                       else '[{0}]'.format(element.tag 
+                                           if hasattr(element, 'tag') else ''))
+        path = (element.getroottree().getpath(element)
+                if hasattr(element, 'getroottree')
+                else element.__class__)
         eltext = getattr(element, 'text', '')
         eltext = dedent(eltext if eltext else '')
         if linebreak:
@@ -152,7 +156,8 @@ class Dumper(object):
             outstream.write("\n")
             if recurse:
                 if maxdepth is None or maxdepth > depth:
-                    for child in element.getchildren():
+                    for child in (element.getchildren()
+                                  if hasattr(element, 'getchildren') else []):
                         _dump(child, depth + 1)
 
         _dump(element, depth=depth)
